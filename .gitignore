@@ -1,0 +1,11 @@
+.vscode/
+__pycache__/
+
+DATA/
+build/
+models/
+
+stats.py
+out-*.csv
+out-*.txt
+*.so

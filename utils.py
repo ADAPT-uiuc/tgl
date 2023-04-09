@@ -27,6 +27,9 @@ def load_feat(d, rand_de=0, rand_dn=0):
             node_feats = torch.randn(1980, rand_dn)
         elif d == 'MOOC':
             edge_feats = torch.randn(7144, rand_dn)
+    if node_feats is None:
+        if d == 'WIKI':
+            node_feats = torch.randn(9228, edge_feats.shape[1])
     return node_feats, edge_feats
 
 def load_graph(d):

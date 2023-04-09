@@ -132,7 +132,7 @@ class TransfomerAttentionLayer(torch.nn.Module):
             att = self.att_dropout(att)
             V = torch.reshape(V*att[:, :, None], (V.shape[0], -1))
             b.srcdata['v'] = torch.cat([torch.zeros((b.num_dst_nodes(), V.shape[1]), device=torch.device('cuda:0')), V], dim=0)
-            b.update_all(dgl.function.copy_src('v', 'm'), dgl.function.sum('m', 'h'))
+            b.update_all(dgl.function.copy_u('v', 'm'), dgl.function.sum('m', 'h'))
         if self.dim_node_feat != 0:
             rst = torch.cat([b.dstdata['h'], b.srcdata['h'][:b.num_dst_nodes()]], dim=1)
         else:
@@ -165,9 +165,8 @@ class JODIETimeEmbedding(torch.nn.Module):
                     self.bias.data.normal_(0, stdv)
 
         self.time_emb = NormalLinear(1, dim_out)
-    
+
     def forward(self, h, mem_ts, ts):
         time_diff = (ts - mem_ts) / (ts + 1)
         rst = h * (1 + self.time_emb(time_diff.unsqueeze(1)))
         return rst
-            
