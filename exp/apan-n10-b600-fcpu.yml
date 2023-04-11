@@ -6,7 +6,7 @@ sampling:
     prop_time: False
     history: 1
     duration: 0
-    num_thread: 32
+    num_thread: 64
     no_neg: True
 memory:
   - type: 'node'
@@ -21,7 +21,7 @@ memory:
 gnn:
   - arch: 'identity'
 train:
-  - epoch: 100
+  - epoch: 20
     batch_size: 600
     lr: 0.0001
     dropout: 0.1
