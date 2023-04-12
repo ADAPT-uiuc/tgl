@@ -10,9 +10,6 @@ def load_feat(d, rand_de=0, rand_dn=0):
     edge_feats = None
     node_feats = None
 
-    # if d == 'mag':
-    #     node_feats = torch.randn(121751665, 128, dtype=torch.float32)
-
     if edge_feats is None and os.path.exists('DATA/{}/edge_features.pt'.format(d)):
         edge_feats = torch.load('DATA/{}/edge_features.pt'.format(d))
         edge_feats = edge_feats.type(torch.float32)
@@ -25,15 +22,19 @@ def load_feat(d, rand_de=0, rand_dn=0):
             edge_feats = torch.randn(411749, 128, dtype=torch.float32)
         elif d == 'lastfm':
             edge_feats = torch.randn(1293103, 128, dtype=torch.float32)
+        elif d == 'wiki-talk':
+            edge_feats = torch.randn(7833140, 128, dtype=torch.float32)
     if node_feats is None:
         if d == 'wiki':
             node_feats = torch.randn(9228, edge_feats.shape[1], dtype=torch.float32)
-        elif d == 'reddit':
-            node_feats = torch.randn(10985, edge_feats.shape[1], dtype=torch.float32)
         elif d == 'mooc':
             node_feats = torch.randn(7047, edge_feats.shape[1], dtype=torch.float32)
+        elif d == 'reddit':
+            node_feats = torch.randn(10985, edge_feats.shape[1], dtype=torch.float32)
         elif d == 'lastfm':
             node_feats = torch.randn(1980, edge_feats.shape[1], dtype=torch.float32)
+        elif d == 'wiki-talk':
+            node_feats = torch.randn(1140149, edge_feats.shape[1], dtype=torch.float32)
 
     return node_feats, edge_feats
 
