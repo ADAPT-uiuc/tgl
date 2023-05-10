@@ -19,7 +19,12 @@ $ pip install torch-scatter==2.1.0+pt112cu116 -f https://data.pyg.org/whl/torch-
 $ pip install dgl==1.0.1+cu116 -f https://data.dgl.ai/wheels/cu116/repo.html
 ```
 
-Then install the rest of the dependencies in `requirements.txt`.
+Then install the rest of the dependencies in `requirements.txt`. Lastly,
+compile the sampler C++ code:
+
+```
+$ python setup.py build_ext --inplace
+```
 
 ## Running Experiments
 
