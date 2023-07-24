@@ -3,6 +3,9 @@ import dgl
 from memorys import *
 from layers import *
 
+from _stats import tt
+
+
 class GeneralModel(torch.nn.Module):
 
     def __init__(self, dim_node, dim_edge, sample_param, memory_param, gnn_param, train_param, combined=False):
@@ -47,7 +50,9 @@ class GeneralModel(torch.nn.Module):
     
     def forward(self, mfgs, neg_samples=1):
         if self.memory_param['type'] == 'node':
+            t_start = tt.start()
             self.memory_updater(mfgs[0])
+            tt.t_mem_update += tt.elapsed(t_start)
         out = list()
         for l in range(self.gnn_param['layer']):
             for h in range(self.sample_param['history']):

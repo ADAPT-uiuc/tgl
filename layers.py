@@ -3,6 +3,9 @@ import dgl
 import math
 import numpy as np
 
+from _stats import tt
+
+
 class TimeEncode(torch.nn.Module):
 
     def __init__(self, dim):
@@ -75,8 +78,13 @@ class TransfomerAttentionLayer(torch.nn.Module):
         if b.num_edges() == 0:
             return torch.zeros((b.num_dst_nodes(), self.dim_out), device=torch.device('cuda:0'))
         if self.dim_time > 0:
+            t_start = tt.start()
             time_feat = self.time_enc(b.edata['dt'])
+            tt.t_time_nbrs += tt.elapsed(t_start)
+            t_start = tt.start()
             zero_time_feat = self.time_enc(torch.zeros(b.num_dst_nodes(), dtype=torch.float32, device=torch.device('cuda:0')))
+            tt.t_time_zero += tt.elapsed(t_start)
+        t_start = tt.start()
         if self.combined:
             Q = torch.zeros((b.num_edges(), self.dim_out), device=torch.device('cuda:0'))
             K = torch.zeros((b.num_edges(), self.dim_out), device=torch.device('cuda:0'))
@@ -137,6 +145,7 @@ class TransfomerAttentionLayer(torch.nn.Module):
             rst = torch.cat([b.dstdata['h'], b.srcdata['h'][:b.num_dst_nodes()]], dim=1)
         else:
             rst = b.dstdata['h']
+        tt.t_self_attn += tt.elapsed(t_start)
         rst = self.w_out(rst)
         rst = torch.nn.functional.relu(self.dropout(rst))
         return self.layer_norm(rst)
