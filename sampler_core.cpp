@@ -272,7 +272,7 @@ class ParallelSampler
                             {
                                 // TGAT style
                                 s_search = indptr[n];
-                                auto e_it = std::upper_bound(ts.begin() + indptr[n], 
+                                auto e_it = std::lower_bound(ts.begin() + indptr[n],
                                                              ts.begin() + indptr[n + 1], nts);
                                 e_search = std::max(int(e_it - ts.begin()) - 1, s_search);
                             }
@@ -292,10 +292,10 @@ class ParallelSampler
                         }
                         // std::cout << n << " " << s_search << " " << e_search << std::endl;
                         double t_sample_s = omp_get_wtime();
-                        if ((recent) || (e_search - s_search < neighs))
+                        if ((recent) || (e_search - s_search + 1 < neighs))
                         {                            
                             // no sampling, pick recent neighbors
-                            for (EdgeIDType k = e_search; k > std::max(s_search, e_search - neighs); k--)
+                            for (EdgeIDType k = e_search; k >= std::max(s_search, e_search - neighs + 1); k--)
                             {
                                 if (ts[k] < nts + offset - 1e-7f)
                                 {
@@ -347,7 +347,7 @@ class ParallelSampler
                 if ((first_layer) || ((prop_time) && num_history == 1) || (recent))
                 {
                     first_layer = false;
-                    use_ptr = true;
+                    // use_ptr = true;
                 }
                 else
                     use_ptr = false;
