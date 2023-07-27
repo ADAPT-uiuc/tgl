@@ -3,7 +3,7 @@ sampling:
     neighbor:
       - 10
       - 10
-    strategy: 'uniform'
+    strategy: 'recent'
     prop_time: False
     history: 1
     duration: 0
@@ -18,9 +18,9 @@ gnn:
     dim_time: 100
     dim_out: 100
 train:
-  - epoch: 20
+  - epoch: 3
     batch_size: 600
     lr: 0.0001
     dropout: 0.1
     att_dropout: 0.1
-    all_on_gpu: True
+    all_on_gpu: False

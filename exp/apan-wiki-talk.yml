@@ -7,17 +7,21 @@ sampling:
     history: 1
     duration: 0
     num_thread: 64
+    no_neg: True
 memory:
-  - type: 'none'
-    dim_out: 0
-gnn:
-  - arch: 'transformer_attention'
-    layer: 1
-    att_head: 2
+  - type: 'node'
     dim_time: 100
+    deliver_to: 'neighbors'
+    mail_combine: 'mean'
+    memory_update: 'transformer'
+    attention_head: 2
+    mailbox_size: 10
+    combine_node_feature: False
     dim_out: 100
+gnn:
+  - arch: 'identity'
 train:
-  - epoch: 20
+  - epoch: 3
     batch_size: 600
     lr: 0.0001
     dropout: 0.1

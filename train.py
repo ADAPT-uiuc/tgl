@@ -182,7 +182,8 @@ tt.csv_open('out-stats.csv')
 tt.csv_write_header()
 for e in range(train_param['epoch']):
     print('Epoch {:d}:'.format(e))
-    t_epoch = tt.start()
+    torch.cuda.synchronize()
+    t_epoch = time.perf_counter()
 
     # time_sample = 0
     # time_prep = 0
@@ -259,7 +260,8 @@ for e in range(train_param['epoch']):
     ap, auc = eval('val')
     tt.t_eval = tt.elapsed(t_eval)
 
-    tt.t_epoch = tt.elapsed(t_epoch)
+    torch.cuda.synchronize()
+    tt.t_epoch = time.perf_counter() - t_epoch
     if e == 0 or ap > best_ap:
         best_e = e
         best_ap = ap

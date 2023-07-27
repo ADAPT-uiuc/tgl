@@ -21,9 +21,9 @@ memory:
 gnn:
   - arch: 'identity'
 train:
-  - epoch: 20
+  - epoch: 10
     batch_size: 600
     lr: 0.0001
     dropout: 0.1
     att_dropout: 0.1
-    all_on_gpu: True
+    all_on_gpu: False

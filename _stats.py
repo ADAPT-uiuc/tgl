@@ -24,11 +24,13 @@ class TimeTable(object):
         self.t_self_attn = 0.0
 
     def start(self):
-        torch.cuda.synchronize()
+        # Uncomment for better breakdown timings
+        #torch.cuda.synchronize()
         return time.perf_counter()
 
     def elapsed(self, start):
-        torch.cuda.synchronize()
+        # Uncomment for better breakdown timings
+        #torch.cuda.synchronize()
         return time.perf_counter() - start
 
     def print_epoch(self, prefix='  '):
