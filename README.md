@@ -33,7 +33,7 @@ There's a lot of data so you might want to start by commenting out `gdelt` and
 `mag`. Then, use the configs in `exp/` directory, e.g.:
 
 ```
-$ python train.py --data wiki --config exp/tgat-l2-n10-b600-fgpu.yml
+$ python train.py --data wiki --config exp/tgat.yml
 ```
 
 [tgl]: https://github.com/amazon-science/tgl
