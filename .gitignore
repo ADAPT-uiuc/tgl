@@ -1,6 +1,7 @@
 .vscode/
 __pycache__/
 
+DATA
 DATA/
 build/
 models/

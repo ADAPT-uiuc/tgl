@@ -1,5 +1,5 @@
-This is the TGL code from [github][tgl], slightly modified with a bit of
-cleanup and timing code for experimentation purposes.
+This is the TGL code from [github][tgl], modified with a bit of cleanup, with
+bugfix for recent sampling, and timing code for experimentation purposes.
 
 ## Getting Started
 
@@ -7,7 +7,7 @@ Create and activate a python environment:
 
 ```
 $ conda create -n tgl python=3.7
-$ conda activate tglite
+$ conda activate tgl
 ```
 
 Install dependencies that have CUDA versions (`dgl` has been updated since
