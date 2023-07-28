@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
 #
-# Script to setup environment for this repo, expects conda to be available.
+# Script to setup this repo, expects to be in conda environment.
 #
 
 repo="$(cd "$(dirname "$0")"; cd ..; pwd)"
-
-echo
-echo ">> setting up environment"
-echo
-
-conda create -n tgl python=3.7
-conda activate tgl
+cd "$repo"
 
 echo
 echo ">> installing python packages"
@@ -27,7 +21,6 @@ echo
 
 python setup.py build_ext --inplace
 
-cd "$repo"
 if [[ -d "DATA/wiki-talk" && ! -f "DATA/wiki-talk/ext_full.npz" ]]; then
   echo
   echo ">> preparing datasets"
@@ -39,10 +32,7 @@ echo
 echo ">> cleaning up"
 echo
 
-make clean
-conda clean -a -y
 pip cache purge
-rm -rf ~/.cache
 
 echo
 echo ">> done!"
