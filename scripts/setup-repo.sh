@@ -3,16 +3,14 @@
 # Script to setup environment for this repo, expects conda to be available.
 #
 
-conda_dir="$HOME/.conda"
-conda_bin="$conda_dir/bin/conda"
 repo="$(cd "$(dirname "$0")"; cd ..; pwd)"
 
 echo
 echo ">> setting up environment"
 echo
 
-"$conda_bin" create -n tgl python=3.7
-"$conda_bin" activate tgl
+conda create -n tgl python=3.7
+conda activate tgl
 
 echo
 echo ">> installing python packages"
@@ -47,4 +45,4 @@ pip cache purge
 rm -rf ~/.cache
 
 echo
-echo ">> done! please restart your shell session"
+echo ">> done!"
