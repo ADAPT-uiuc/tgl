@@ -7,6 +7,14 @@ repo="$(cd "$(dirname "$0")"; cd ..; pwd)"
 cd "$repo"
 
 echo
+echo ">> setting up environment"
+echo
+
+source ~/.conda/etc/profile.d/conda.sh
+conda create -n tgl python=3.7
+conda activate tgl
+
+echo
 echo ">> installing python packages"
 echo
 
@@ -27,12 +35,6 @@ if [[ -d "DATA/wiki-talk" && ! -f "DATA/wiki-talk/ext_full.npz" ]]; then
   echo
   python gen_graph.py --data wiki-talk --add_reverse
 fi
-
-echo
-echo ">> cleaning up"
-echo
-
-pip cache purge
 
 echo
 echo ">> done!"
