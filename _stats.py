@@ -55,7 +55,7 @@ class TimeTable(object):
             'mem_update,time_zero,time_nbrs,self_attn'
         self.csv.write(header + '\n')
 
-    def csv_write_line(self, epoch):
+    def csv_write_line(self, epoch=0):
         line = f'{epoch},{self.t_epoch},{self.t_loop},{self.t_eval},' \
             f'{self.t_forward},{self.t_backward},{self.t_sample},{self.t_prep_batch},{self.t_prep_input},{self.t_post_update},' \
             f'{self.t_mem_update},{self.t_time_zero},{self.t_time_nbrs},{self.t_self_attn}'

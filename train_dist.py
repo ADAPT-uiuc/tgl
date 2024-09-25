@@ -1,8 +1,11 @@
 import argparse
 import os
 
+from _stats import tt
+
 parser=argparse.ArgumentParser()
 parser.add_argument('--data', type=str, help='dataset name')
+parser.add_argument('--data_path', type=str, help='path to data folder')
 parser.add_argument('--config', type=str, help='path to config file')
 parser.add_argument('--seed', type=int, default=0, help='random seed to use')
 parser.add_argument('--num_gpus', type=int, default=4, help='number of gpus to use')
@@ -39,12 +42,15 @@ def set_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
-set_seed(args.seed)
+# set_seed(args.seed)
+set_seed(0)
+print(args)
+
 torch.distributed.init_process_group(backend='gloo', timeout=datetime.timedelta(0, 3600))
 nccl_group = torch.distributed.new_group(ranks=list(range(args.num_gpus)), backend='nccl')
 
 if args.local_rank == 0:
-    _node_feats, _edge_feats = load_feat(args.data)
+    _node_feats, _edge_feats = load_feat(args.data, args.data_path)
 dim_feats = [0, 0, 0, 0, 0, 0]
 if args.local_rank == 0:
     if _node_feats is not None:
@@ -70,9 +76,9 @@ torch.distributed.broadcast_object_list(dim_feats, src=0)
 if args.local_rank > 0 and args.local_rank < args.num_gpus:
     node_feats = None
     edge_feats = None
-    if os.path.exists('DATA/{}/node_features.pt'.format(args.data)):
+    if os.path.exists('/shared/data/{}/node_features.pt'.format(args.data)):
         node_feats = get_shared_mem_array('node_feats', (dim_feats[0], dim_feats[1]), dtype=dim_feats[2])
-    if os.path.exists('DATA/{}/edge_features.pt'.format(args.data)):
+    if os.path.exists('/shared/data/{}/edge_features.pt'.format(args.data)):
         edge_feats = get_shared_mem_array('edge_feats', (dim_feats[3], dim_feats[4]), dtype=dim_feats[5])
 sample_param, memory_param, gnn_param, train_param = parse_config(args.config)
 orig_batch_size = train_param['batch_size']
@@ -86,7 +92,7 @@ torch.distributed.broadcast_object_list(path_saver, src=0)
 path_saver = path_saver[0]
 
 if args.local_rank == args.num_gpus:
-    g, df = load_graph(args.data)
+    g, df = load_graph(args.data, args.data_path)
     num_nodes = [g['indptr'].shape[0] - 1]
 else:
     num_nodes = [None]
@@ -183,6 +189,8 @@ if args.local_rank < args.num_gpus:
         mailbox.allocate_pinned_memory_buffers(sample_param, train_param['batch_size'])
     tot_loss = 0
     prev_thread = None
+    tt.csv_open(f'out-stats-{args.local_rank}.csv')
+    tt.csv_write_header()
     while True:
         my_model_state = [None]
         model_state = [None] * (args.num_gpus + 1)
@@ -200,6 +208,10 @@ if args.local_rank < args.num_gpus:
         elif my_model_state[0] == 5:
             torch.distributed.gather_object(float(tot_loss), None, dst=args.num_gpus)
             tot_loss = 0
+            
+            tt.csv_write_line()
+            tt.reset_epoch()
+
             continue
         elif my_model_state[0] == 0:
             if prev_thread is not None:
@@ -227,14 +239,22 @@ if args.local_rank < args.num_gpus:
                 # with torch.cuda.stream(prev_thread.get_stream()):
                 mfgs = prev_thread.get_mfgs()
                 model.train()
+                t_start = tt.start()
                 optimizer.zero_grad()
                 pred_pos, pred_neg = model(mfgs)
+                tt.t_forward += tt.elapsed(t_start)
+
+                t_start = tt.start()
                 loss = creterion(pred_pos, torch.ones_like(pred_pos))
                 loss += creterion(pred_neg, torch.zeros_like(pred_neg))
                 loss.backward()
                 optimizer.step()
+                tt.t_backward += tt.elapsed(t_start)
+
                 with torch.no_grad():
                     tot_loss += float(loss)
+
+                t_start = tt.start()
                 if mailbox is not None:
                     with torch.no_grad():
                         eid = prev_thread.get_eid()
@@ -248,6 +268,7 @@ if args.local_rank < args.num_gpus:
                             torch.distributed.barrier(group=nccl_group)
                             if args.local_rank == 0:
                                 mailbox.update_next_mail_pos()
+                tt.t_post_update += tt.elapsed(t_start)
                 prev_thread = curr_thread
             else:
                 my_mfgs = [None]
@@ -430,10 +451,17 @@ else:
     best_e = 0
     tap = 0
     tauc = 0
+
+    tt.csv_open(f'out-stats-{args.local_rank}.csv')
+    tt.csv_write_header()
     for e in range(train_param['epoch']):
         print('Epoch {:d}:'.format(e))
-        time_sample = 0
-        time_tot = 0
+
+        t_epoch = time.perf_counter()
+        # tt.epoch = tt.start()
+
+        # time_sample = 0
+        # time_tot = 0
         if sampler is not None:
             sampler.reset()
         if mailbox is not None:
@@ -463,10 +491,15 @@ else:
                 additional_idx = np.zeros(train_param['batch_size'] // train_param['reorder'] * i) - 1
                 group_indexes.append(np.concatenate([additional_idx, base_idx])[:base_idx.shape[0]])
         with tqdm(total=itr_tot + max((val_edge_end - train_edge_end) // train_param['batch_size'] // args.num_gpus, 1) * args.num_gpus) as pbar:
+            t_loop = time.perf_counter()
             for _, rows in df[:train_edge_end].groupby(group_indexes[random.randint(0, len(group_indexes) - 1)]):
-                t_tot_s = time.time()
+                # t_tot_s = time.time()
+                t_start = time.perf_counter()
                 root_nodes = np.concatenate([rows.src.values, rows.dst.values, neg_link_sampler.sample(len(rows))]).astype(np.int32)
                 ts = np.concatenate([rows.time.values, rows.time.values, rows.time.values]).astype(np.float32)
+                tt.t_prep_batch += time.perf_counter() - t_start
+
+                t_start = time.perf_counter()
                 if sampler is not None:
                     if 'no_neg' in sample_param and sample_param['no_neg']:
                         pos_root_end = root_nodes.shape[0] * 2 // 3
@@ -474,7 +507,10 @@ else:
                     else:
                         sampler.sample(root_nodes, ts)
                     ret = sampler.get_ret()
-                    time_sample += ret[0].sample_time()
+                    # time_sample += ret[0].sample_time()
+                tt.t_sample += time.perf_counter() - t_start
+
+                t_start = time.perf_counter()
                 if gnn_param['arch'] != 'identity':
                     mfgs = to_dgl_blocks(ret, sample_param['history'], cuda=False)
                 else:
@@ -511,16 +547,28 @@ else:
                     multi_ts = list()
                     multi_eid = list()
                     multi_block = list()
+                tt.t_prep_input += time.perf_counter() - t_start
                 pbar.update(1)
-                time_tot += time.time() - t_tot_s
-            print('Training time:',time_tot)
+            tt.t_loop += time.perf_counter() - t_loop
+                # time_tot += time.time() - t_tot_s
+            # print('Training time:',time_tot)
             model_state = [5] * (args.num_gpus + 1)
             my_model_state = [None]
             torch.distributed.scatter_object_list(my_model_state, model_state, src=args.num_gpus)
             gathered_loss = [None] * (args.num_gpus + 1)
             torch.distributed.gather_object(float(0), gathered_loss, dst=args.num_gpus)
             total_loss = np.sum(np.array(gathered_loss) * train_param['batch_size'])
+            
+            t_eval = time.perf_counter()
             ap, auc = eval('val')
+            tt.t_eval = time.perf_counter() - t_eval
+
+            tt.t_epoch = time.perf_counter() - t_epoch
+            print('  loss:{:.4f} val ap:{:4f} val auc:{:4f}'.format(total_loss, ap, auc))
+            tt.csv_write_line(epoch=e)
+            tt.print_epoch()
+            tt.reset_epoch()
+
             if ap > best_ap:
                 best_e = e
                 best_ap = ap
@@ -529,14 +577,17 @@ else:
                 my_model_state = [None]
                 torch.distributed.scatter_object_list(my_model_state, model_state, src=args.num_gpus)
                 # for memory based models, testing after validation is faster
+                t_test = time.perf_counter()
                 tap, tauc = eval('test')
+                tt.t_test = time.perf_counter() - t_test
+                print('  test time:{:.2f}s  test AP:{:4f}  test AUC:{:4f}'.format(t_test, tap, tauc))
         print('\ttrain loss:{:.4f}  val ap:{:4f}  val auc:{:4f}'.format(total_loss, ap, auc))
-        print('\ttotal time:{:.2f}s sample time:{:.2f}s'.format(time_tot, time_sample))
+        # print('\ttotal time:{:.2f}s sample time:{:.2f}s'.format(time_tot, time_sample))
 
     print('Best model at epoch {}.'.format(best_e))
-    print('\ttest ap:{:4f}  test auc:{:4f}'.format(tap, tauc))
-
+    tt.csv_close()
     # let all process exit
     model_state = [-1] * (args.num_gpus + 1)
     my_model_state = [None]
     torch.distributed.scatter_object_list(my_model_state, model_state, src=args.num_gpus)
+
