@@ -9,7 +9,7 @@ parser.add_argument('--data', type=str, help='dataset name')
 parser.add_argument('--add_reverse', default=False, action='store_true')
 args=parser.parse_args()
 
-df = pd.read_csv('DATA/{}/edges.csv'.format(args.data))
+df = pd.read_csv('/shared/data/{}/edges.csv'.format(args.data))
 num_nodes = max(int(df['src'].max()), int(df['dst'].max())) + 1
 print('num_nodes: ', num_nodes)
 
