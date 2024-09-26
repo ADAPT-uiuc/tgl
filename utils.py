@@ -6,41 +6,66 @@ import time
 import pandas as pd
 import numpy as np
 
-def load_feat(d, rand_de=0, rand_dn=0):
-    edge_feats = None
+# def load_feat(d, data_path='', rand_de=0, rand_dn=0):
+#     edge_feats = None
+#     node_feats = None
+
+#     if edge_feats is None and os.path.exists(data_path + 'data/{}/edge_features.pt'.format(d)):
+#         edge_feats = torch.load(data_path + 'data/{}/edge_features.pt'.format(d))
+#         edge_feats = edge_feats.type(torch.float32)
+#     if node_feats is None and os.path.exists(data_path + 'data/{}/node_features.pt'.format(d)):
+#         node_feats = torch.load(data_path + 'data/{}/node_features.pt'.format(d))
+#         node_feats = node_feats.type(torch.float32)
+
+#     if edge_feats is None:
+#         if d == 'mooc':
+#             edge_feats = torch.randn(411749, 128, dtype=torch.float32)
+#         elif d == 'lastfm':
+#             edge_feats = torch.randn(1293103, 128, dtype=torch.float32)
+#         elif d == 'wiki-talk':
+#             edge_feats = torch.randn(7833140, 128, dtype=torch.float32)
+#     if node_feats is None:
+#         if d == 'wiki':
+#             node_feats = torch.randn(9228, edge_feats.shape[1], dtype=torch.float32)
+#         elif d == 'mooc':
+#             node_feats = torch.randn(7047, edge_feats.shape[1], dtype=torch.float32)
+#         elif d == 'reddit':
+#             node_feats = torch.randn(10985, edge_feats.shape[1], dtype=torch.float32)
+#         elif d == 'lastfm':
+#             node_feats = torch.randn(1980, edge_feats.shape[1], dtype=torch.float32)
+#         elif d == 'wiki-talk':
+#             node_feats = torch.randn(1140149, edge_feats.shape[1], dtype=torch.float32)
+
+#     return node_feats, edge_feats
+
+def load_feat(d, data_path='', rand_de=0, rand_dn=0):
     node_feats = None
-
-    if edge_feats is None and os.path.exists('DATA/{}/edge_features.pt'.format(d)):
-        edge_feats = torch.load('DATA/{}/edge_features.pt'.format(d))
-        edge_feats = edge_feats.type(torch.float32)
-    if node_feats is None and os.path.exists('DATA/{}/node_features.pt'.format(d)):
-        node_feats = torch.load('DATA/{}/node_features.pt'.format(d))
-        node_feats = node_feats.type(torch.float32)
-
-    if edge_feats is None:
-        if d == 'mooc':
-            edge_feats = torch.randn(411749, 128, dtype=torch.float32)
-        elif d == 'lastfm':
-            edge_feats = torch.randn(1293103, 128, dtype=torch.float32)
-        elif d == 'wiki-talk':
-            edge_feats = torch.randn(7833140, 128, dtype=torch.float32)
-    if node_feats is None:
-        if d == 'wiki':
-            node_feats = torch.randn(9228, edge_feats.shape[1], dtype=torch.float32)
-        elif d == 'mooc':
-            node_feats = torch.randn(7047, edge_feats.shape[1], dtype=torch.float32)
-        elif d == 'reddit':
-            node_feats = torch.randn(10985, edge_feats.shape[1], dtype=torch.float32)
-        elif d == 'lastfm':
-            node_feats = torch.randn(1980, edge_feats.shape[1], dtype=torch.float32)
-        elif d == 'wiki-talk':
-            node_feats = torch.randn(1140149, edge_feats.shape[1], dtype=torch.float32)
-
+    if os.path.exists('/shared/data/{}/node_features.pt'.format(d)):
+        node_feats = torch.load('/shared/data/{}/node_features.pt'.format(d))
+        if node_feats.dtype == torch.bool:
+            node_feats = node_feats.type(torch.float32)
+    edge_feats = None
+    if os.path.exists('/shared/data/{}/edge_features.pt'.format(d)):
+        edge_feats = torch.load('/shared/data/{}/edge_features.pt'.format(d))
+        if edge_feats.dtype == torch.bool:
+            edge_feats = edge_feats.type(torch.float32)
+    if rand_de > 0:
+        if d == 'LASTFM':
+            edge_feats = torch.randn(1293103, rand_de)
+        elif d == 'MOOC':
+            edge_feats = torch.randn(411749, rand_de)
+    if rand_dn > 0:
+        if d == 'LASTFM':
+            node_feats = torch.randn(1980, rand_dn)
+        elif d == 'MOOC':
+            node_feats = torch.randn(7144, rand_dn)
+        # elif d == 'wiki':
+        #     node_feats = torch.randn(9228, rand_dn)
     return node_feats, edge_feats
 
-def load_graph(d):
-    df = pd.read_csv('DATA/{}/edges.csv'.format(d))
-    g = np.load('DATA/{}/ext_full.npz'.format(d))
+def load_graph(d, data_path):
+    df = pd.read_csv(data_path + 'data/{}/edges.csv'.format(d))
+    g = np.load(data_path + 'data/{}/ext_full.npz'.format(d))
     return g, df
 
 def parse_config(f):
