@@ -1,3 +1,3 @@
 #!/bin/bash
 
-srun /u/wanyu/github/tgl/scripts/run-exp-slurm-#1-tgl*
+srun /u/wanyu/github/tgl/scripts/run-exp-slurm*
