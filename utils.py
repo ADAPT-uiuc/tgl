@@ -40,13 +40,13 @@ import numpy as np
 
 def load_feat(d, data_path='', rand_de=0, rand_dn=0):
     node_feats = None
-    if os.path.exists('/shared/data/{}/node_features.pt'.format(d)):
-        node_feats = torch.load('/shared/data/{}/node_features.pt'.format(d))
+    if os.path.exists('/scratch/bbzw/wanyu/data/{}/node_features.pt'.format(d)):
+        node_feats = torch.load('/scratch/bbzw/wanyu/data/{}/node_features.pt'.format(d))
         if node_feats.dtype == torch.bool:
             node_feats = node_feats.type(torch.float32)
     edge_feats = None
-    if os.path.exists('/shared/data/{}/edge_features.pt'.format(d)):
-        edge_feats = torch.load('/shared/data/{}/edge_features.pt'.format(d))
+    if os.path.exists('/scratch/bbzw/wanyu/data/{}/edge_features.pt'.format(d)):
+        edge_feats = torch.load('/scratch/bbzw/wanyu/data/{}/edge_features.pt'.format(d))
         if edge_feats.dtype == torch.bool:
             edge_feats = edge_feats.type(torch.float32)
     if rand_de > 0:
