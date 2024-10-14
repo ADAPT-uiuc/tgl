@@ -6,9 +6,9 @@
 #SBATCH --partition=gpuA100x8
 #SBATCH --time=2:00:00
 #SBATCH --account=bbzw-delta-gpu
-#SBATCH --job-name=gdelt-apan-tgl-1
-#SBATCH --output=gdelt-apan-tgl-1.out
-#SBATCH --error=gdelt-apan-tgl-1.err
+#SBATCH --job-name=stack-overflow-apan-tgl-1
+#SBATCH --output=stack-overflow-apan-tgl-1.out
+#SBATCH --error=stack-overflow-apan-tgl-1.err
 ### GPU options ###
 #SBATCH --gpus-per-node=1
 #SBATCH --gpus-per-task=1
@@ -29,7 +29,7 @@ echo "job is starting on `hostname`"
 
 echo "start: $(date)"
 
-srun python train.py  --data stack-overflow --config "/u/wanyu/github/tgl/examples/exp/single/apan-gdelt.yml";
+srun python train.py  --data stack-overflow --config "/u/wanyu/github/tgl/examples/exp/single/apan-stack-overflow.yml";
 srun mv out-stats.csv "out-tgl-stack-overflow-apan.csv";
 
 echo "end $(date)"
